@@ -17,7 +17,7 @@ A bash script to automate the installation and configuration of essential packag
 
 1. **Download the script:**
    ```bash
-   git clone https://github.com/actuallyaryaman/Arch-Setup/
+   git clone https://github.com/actuallyaryaman/Arch-Setup/ && cd Arch-Setup
    ```
 
 2. **Make the script executable:**
