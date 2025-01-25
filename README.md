@@ -17,7 +17,7 @@ A bash script to automate the installation and configuration of essential packag
 
 1. **Download the script:**
    ```bash
-   wget https://example.com/arch_setup.sh
+   git clone https://github.com/actuallyaryaman/Arch-Setup/
    ```
 
 2. **Make the script executable:**
@@ -54,4 +54,4 @@ Upon running the script, you'll be presented with a menu:
 
 ## License
 
-This script is provided "as is" without any warranties.
+This program is licensed under the [WTFPL](LICENSE.txt) license
