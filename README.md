@@ -1,51 +1,57 @@
-# My Arch Setup
-## This repository is a work in progress.
-> [!Warning]
-> This is personal use repository and I am not responsible for anything you do with your system.
+# Arch Linux Setup Script
 
-To run the below commands clone this repo
+A bash script to automate the installation and configuration of essential packages, system settings, and utilities for Arch Linux.
 
-```shell
-git clone https://github.com/actuallyaryaman/Arch-Setup && cd Arch-Setup
+## Features
+
+- **System Update:** Updates the entire system.
+- **Install yay-bin:** Installs the AUR helper `yay-bin`.
+- **Install Packages:** User-defined package installation with tracking.
+- **Change Default Shell:** Select and set a new default shell.
+- **Set Battery Threshold:** Set battery charge limits with persistence.
+- **Fix Plasma-meta Package:** Remove `plasma-meta` and reinstall dependencies.
+- **Reinstall Saved Packages:** Restore previously installed packages.
+- **Exit:** Close the script.
+
+## Usage
+
+1. **Download the script:**
+   ```bash
+   wget https://example.com/arch_setup.sh
+   ```
+
+2. **Make the script executable:**
+   ```bash
+   chmod +x arch_setup.sh
+   ```
+
+3. **Run the script:**
+   ```bash
+   ./arch_setup.sh
+   ```
+
+## Options in the Script
+
+Upon running the script, you'll be presented with a menu:
+
+```
+1) Update the system
+2) Install yay-bin
+3) Install packages
+4) Change default shell
+5) Set battery charging threshold
+6) Fix plasma-meta package
+7) Install packages from saved list
+8) Exit
 ```
 
-### Pacman Configuration
+## Notes
 
-```shell
-sudo cp -r pacman.conf /etc/pacman.conf
-```
+- Ensure you have `sudo` privileges to run the script.
+- The script creates an `installed_packages.txt` file to track installed packages.
+- Battery threshold settings are applied instantly and persist after reboots.
+- For Plasma-meta fix, dependencies are reinstalled individually after removal.
 
-<!-- ### For KDE users (for users installing via arch-install)
-Arch installs the [`plasma-meta`](https://archlinux.org/packages/extra/any/plasma-meta/) package which is a meta package to install KDE Plasma.
-Currently removing `Discover` uninstalls all the other package dependendencies.
+## License
 
-So to remove discover:
-
-```shell
-sudo pacman -Rs discover && sudo pacman -S 
-``` -->
-
-
-### Xorg Config
-
-By default Nvidia driver on hybrid mode uses the `/usr/lib/Xorg` process which I do not want.
-
-So we'll simply explictly tell Xorg to use the integrated drivers.
-
-```shell
-sudo cp xorg.conf /etc/X11/xorg.conf
-```
-
-### JamesDSP Configuration
-
-I use [JamesDSP](https://github.com/Audio4Linux/JDSP4Linux/) to tweak my audio output as the default output on linux sucks.
-
-Here are the [config files](dsp/).
-
-### Wallpapers
-
-Some of my recent [walls](walls/).
-
-Currently setup(I like to keep it simple, sue me.)
-
-![alt text](desktop.png)
+This script is provided "as is" without any warranties.
