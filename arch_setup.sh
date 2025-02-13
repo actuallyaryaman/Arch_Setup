@@ -175,6 +175,76 @@ WantedBy=multi-user.target suspend.target hibernate.target hybrid-sleep.target s
     show_menu
 }
 
+# Function to configure Git user name and email
+configure_git() {
+    echo "Enter your Git user name:"
+    read -rp "User Name: " git_user
+
+    echo "Enter your Git email:"
+    read -rp "Email: " git_email
+
+    if [[ -n "$git_user" && -n "$git_email" ]]; then
+        git config --global user.name "$git_user"
+        git config --global user.email "$git_email"
+        echo "Git configured globally with:"
+        git config --global --list | grep 'user'
+    else
+        echo "Invalid input. Both user name and email are required."
+    fi
+
+    sleep 1
+    show_menu
+}
+
+# Function to install ZimFW via curl
+install_zimfw_online() {
+    echo "Installing ZimFW using curl..."
+    curl -fsSL https://raw.githubusercontent.com/zimfw/install/master/install.zsh | zsh
+    echo "ZimFW installation complete."
+    sleep 1
+    show_menu
+}
+
+# Function to install nbfc-linux and configure EC probe command
+install_nbfc_linux() {
+    echo "Installing nbfc-linux from the AUR..."
+    yay -S --noconfirm nbfc-linux
+
+    if ! command -v ec_probe &>/dev/null; then
+        echo "Error: ec_probe not found. Make sure nbfc-linux installed correctly."
+        sleep 1
+        show_menu
+    fi
+
+    echo "Executing EC probe command..."
+    sudo ec_probe write 0xCE 0x03
+    sudo ec_probe read 0xCE
+    echo "EC probe command executed successfully."
+
+    echo "Creating systemd service for EC probe command..."
+    service_content="[Unit]
+Description=EC Probe Command at Boot
+After=multi-user.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/ec_probe write 0xCE 0x03
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target
+"
+
+    echo "$service_content" | sudo tee /etc/systemd/system/ec_probe.service > /dev/null
+
+    sudo systemctl enable ec_probe.service
+    sudo systemctl start ec_probe.service
+
+    echo "EC Probe systemd service created and enabled to run on boot."
+    sleep 1
+    show_menu
+}
+
 # Menu function
 show_menu() {
     clear
@@ -187,7 +257,10 @@ show_menu() {
     echo "5) Set battery charging threshold"
     echo "6) Fix plasma-meta package"
     echo "7) Install packages from saved list"
-    echo "8) Exit"
+    echo "8) Configure Git user name and email"
+    echo "9) Install ZimFW"
+    echo "10) Configure ec_probe"
+    echo "0) Exit"
     echo "======================="
     read -rp "Enter your choice: " choice
 
@@ -199,11 +272,13 @@ show_menu() {
         5) set_battery_threshold ;;
         6) fix_plasma_meta ;;
         7) reinstall_from_exported_list ;;
-        8) echo "Exiting..."; exit 0 ;;
+        8) configure_git ;;
+        9) install_zimfw_online ;;
+        10) install_nbfc_linux ;;
+        0) echo "Exiting..."; exit 0 ;;
         *) echo "Invalid choice."; sleep 2; show_menu ;;
     esac
 }
 
 # Start the script by calling the menu
 show_menu
-t
