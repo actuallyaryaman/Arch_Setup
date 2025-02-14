@@ -17,3 +17,4 @@ ranger
 firefox
 signal-desktop
 ente-auth-bin
+github-cli
