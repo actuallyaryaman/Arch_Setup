@@ -64,7 +64,7 @@ reinstall_from_exported_list() {
         echo "No package list found. Install some packages first."
     else
         echo "Reinstalling packages from '$PACKAGE_LIST_FILE'..."
-        sudo pacman -S --noconfirm --needed $(cat "$PACKAGE_LIST_FILE")
+        yay -S --noconfirm --needed $(cat "$PACKAGE_LIST_FILE")
         echo "All packages from the list have been installed."
     fi
     sleep 1
