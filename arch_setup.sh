@@ -205,46 +205,6 @@ install_zimfw_online() {
     show_menu
 }
 
-# Function to install nbfc-linux and configure EC probe command
-install_nbfc_linux() {
-    echo "Installing nbfc-linux from the AUR..."
-    yay -S --noconfirm nbfc-linux
-
-    if ! command -v ec_probe &>/dev/null; then
-        echo "Error: ec_probe not found. Make sure nbfc-linux installed correctly."
-        sleep 1
-        show_menu
-    fi
-
-    echo "Executing EC probe command..."
-    sudo ec_probe write 0xCE 0x03
-    sudo ec_probe read 0xCE
-    echo "EC probe command executed successfully."
-
-    echo "Creating systemd service for EC probe command..."
-    service_content="[Unit]
-Description=EC Probe Command at Boot
-After=multi-user.target
-
-[Service]
-Type=oneshot
-ExecStart=/usr/bin/ec_probe write 0xCE 0x03
-RemainAfterExit=yes
-
-[Install]
-WantedBy=multi-user.target
-"
-
-    echo "$service_content" | sudo tee /etc/systemd/system/ec_probe.service > /dev/null
-
-    sudo systemctl enable ec_probe.service
-    sudo systemctl start ec_probe.service
-
-    echo "EC Probe systemd service created and enabled to run on boot."
-    sleep 1
-    show_menu
-}
-
 # Menu function
 show_menu() {
     clear
@@ -259,7 +219,6 @@ show_menu() {
     echo "7) Install packages from saved list"
     echo "8) Configure Git user name and email"
     echo "9) Install ZimFW"
-    echo "10) Configure ec_probe"
     echo "0) Exit"
     echo "======================="
     read -rp "Enter your choice: " choice
@@ -274,7 +233,6 @@ show_menu() {
         7) reinstall_from_exported_list ;;
         8) configure_git ;;
         9) install_zimfw_online ;;
-        10) install_nbfc_linux ;;
         0) echo "Exiting..."; exit 0 ;;
         *) echo "Invalid choice."; sleep 2; show_menu ;;
     esac
