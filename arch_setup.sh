@@ -5,7 +5,7 @@ PACKAGE_LIST_FILE="$(pwd)/installed_packages.txt"
 # Function to update the system
 update_system() {
     echo "Updating the system..."
-    sudo pacman -Syu --noconfirm
+    yay -Syu --noconfirm --needed --removemake
     echo "System update completed."
     sleep 1
     show_menu
@@ -64,7 +64,7 @@ reinstall_from_exported_list() {
         echo "No package list found. Install some packages first."
     else
         echo "Reinstalling packages from '$PACKAGE_LIST_FILE'..."
-        yay -S --noconfirm --needed $(cat "$PACKAGE_LIST_FILE")
+        yay -S --noconfirm --needed --removemake $(cat "$PACKAGE_LIST_FILE")
         echo "All packages from the list have been installed."
     fi
     sleep 1
