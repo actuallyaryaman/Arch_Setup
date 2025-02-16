@@ -2,15 +2,6 @@
 
 PACKAGE_LIST_FILE="$(pwd)/installed_packages.txt"
 
-# Function to update the system
-update_system() {
-    echo "Updating the system..."
-    yay -Syu --noconfirm --needed --removemake
-    echo "System update completed."
-    sleep 1
-    show_menu
-}
-
 # Function to install yay-bin
 install_yay() {
     echo "Installing yay-bin..."
@@ -29,6 +20,16 @@ install_yay() {
     sleep 1
     show_menu
 }
+# Function to update the system
+update_system() {
+    echo "Updating the system..."
+    yay -Syu --noconfirm --needed --removemake
+    echo "System update completed."
+    sleep 1
+    show_menu
+}
+
+
 
 # Function to install packages and update the list
 install_packages() {
@@ -42,7 +43,7 @@ install_packages() {
             echo "No packages entered. Please try again."
         else
             echo "Installing packages: $packages"
-            yay -S --noconfirm $packages
+            yay -S --noconfirm --needed --removemake $packages
             add_to_package_list $packages
             echo "Installation completed and package list updated."
         fi
@@ -210,8 +211,8 @@ show_menu() {
     clear
     echo "Arch Linux Setup Script"
     echo "======================="
-    echo "1) Update the system"
-    echo "2) Install yay-bin"
+    echo "1) Install yay-bin"
+    echo "2) Update system"
     echo "3) Install packages"
     echo "4) Change default shell"
     echo "5) Set battery charging threshold"
@@ -224,8 +225,8 @@ show_menu() {
     read -rp "Enter your choice: " choice
 
     case $choice in
-        1) update_system ;;
-        2) install_yay ;;
+        1) install_yay ;;
+        2) update_system ;;
         3) install_packages ;;
         4) change_shell ;;
         5) set_battery_threshold ;;
