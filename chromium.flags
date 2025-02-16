@@ -1,0 +1,4 @@
+%U --ozone-platform=wayland
+--use-gl=angle --use-angle=vulkan
+--enable-features='AcceleratedVideoEncoder,TouchpadOverscrollHistoryNavigation,VaapiOnNvidiaGPUs,VaapiIgnoreDriverChecks,Vulkan,DefaultANGLEVulkan,VulkanFromANGLE'
+--ignore-gpu-blocklist' --disable-gpu-driver-bug-workaround
