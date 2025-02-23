@@ -63,11 +63,55 @@ add_to_package_list() {
 reinstall_from_exported_list() {
     if [[ ! -f $PACKAGE_LIST_FILE ]]; then
         echo "No package list found. Install some packages first."
-    else
-        echo "Reinstalling packages from '$PACKAGE_LIST_FILE'..."
-        yay -S --noconfirm --needed --removemake $(cat "$PACKAGE_LIST_FILE")
-        echo "All packages from the list have been installed."
+        sleep 1
+        show_menu
+        return
     fi
+
+    # Read package list into an array
+    mapfile -t package_list < "$PACKAGE_LIST_FILE"
+
+    if [[ ${#package_list[@]} -eq 0 ]]; then
+        echo "The package list is empty."
+        sleep 1
+        show_menu
+        return
+    fi
+
+    echo "Packages in the saved list:"
+    for i in "${!package_list[@]}"; do
+        echo "$((i+1))) ${package_list[$i]}"
+    done
+
+    echo "Enter the numbers of the packages you want to **exclude** (space-separated), or press Enter to install all:"
+    read -rp "Exclude: " exclude_input
+
+    # Process exclusions if the user entered numbers
+    if [[ -n "$exclude_input" ]]; then
+        # Convert input into an array of indexes to exclude
+        exclude_indexes=($exclude_input)
+        filtered_packages=()
+
+        for i in "${!package_list[@]}"; do
+            if [[ ! " ${exclude_indexes[@]} " =~ " $((i+1)) " ]]; then
+                filtered_packages+=("${package_list[$i]}")
+            else
+                echo "Skipping: ${package_list[$i]}"
+            fi
+        done
+    else
+        filtered_packages=("${package_list[@]}")
+    fi
+
+    # Proceed with installation if there are remaining packages
+    if [[ ${#filtered_packages[@]} -gt 0 ]]; then
+        echo "Installing selected packages: ${filtered_packages[*]}"
+        yay -S --noconfirm --needed --removemake "${filtered_packages[@]}"
+        echo "Installation completed."
+    else
+        echo "No packages selected for installation."
+    fi
+
     sleep 1
     show_menu
 }
@@ -100,7 +144,6 @@ change_shell() {
     sleep 1
     show_menu
 }
-
 # Function to fix plasma-meta package
 fix_plasma_meta() {
     echo "Installing pacman-contrib to use pactree..."
@@ -216,7 +259,7 @@ show_menu() {
     echo "3) Install packages"
     echo "4) Change default shell"
     echo "5) Set battery charging threshold"
-    echo "6) Fix plasma-meta package"
+    echo "6) Fix plasma-meta package(plasma users only who want to remove discover)"
     echo "7) Install packages from saved list"
     echo "8) Configure Git user name and email"
     echo "9) Install ZimFW"
