@@ -1,6 +1,9 @@
 #!/bin/bash
 
 PACKAGE_LIST_FILE="$(pwd)/installed_packages.txt"
+# Get the directory of the script
+SCRIPT_DIR="$(dirname "$(realpath "$0")")"
+PACKAGE_LIST_FILE="$SCRIPT_DIR/installed_packages.txt"
 
 # Function to install yay-bin
 install_yay() {
@@ -29,8 +32,6 @@ update_system() {
     show_menu
 }
 
-
-
 # Function to install packages and update the list
 install_packages() {
     while true; do
@@ -58,6 +59,8 @@ add_to_package_list() {
         fi
     done
 }
+
+
 
 # Function to reinstall packages from the saved list
 reinstall_from_exported_list() {
