@@ -257,33 +257,58 @@ show_menu() {
     clear
     echo "Arch Linux Setup Script"
     echo "======================="
-    echo "1) Install yay-bin"
-    echo "2) Update system"
-    echo "3) Install packages"
-    echo "4) Change default shell"
-    echo "5) Set battery charging threshold"
-    echo "6) Fix plasma-meta package(plasma users only who want to remove discover)"
-    echo "7) Install packages from saved list"
-    echo "8) Configure Git user name and email"
-    echo "9) Install ZimFW"
+
+    local options=()
+    
+    # Always available options
+    options+=("Update system:update_system")
+    
+    # Only add "Install yay-bin" if yay is NOT installed
+    if ! command -v yay &>/dev/null; then
+        options+=("Install yay-bin:install_yay")
+    fi
+
+    options+=("Install packages:install_packages")
+
+    # Only add "Install packages from saved list" if package list file exists and is not empty
+    if [[ -f "$PACKAGE_LIST_FILE" && -s "$PACKAGE_LIST_FILE" ]]; then
+        options+=("Install packages from saved list:reinstall_from_exported_list")
+    fi
+
+    options+=("Change default shell:change_shell")
+
+    # Only add "Install ZimFW" if the current shell is Zsh
+    if [[ "$SHELL" == "/bin/zsh" || "$SHELL" == "/usr/bin/zsh" ]]; then
+        options+=("Install ZimFW:install_zimfw_online")
+    fi
+
+    options+=("Set battery charging threshold:set_battery_threshold")
+    options+=("Fix plasma-meta package & remove discover:fix_plasma_meta")
+    options+=("Configure Git user name and email:configure_git")
+
+    # Display dynamic menu
+    local index=1
+    for option in "${options[@]}"; do
+        echo "$index) ${option%%:*}"
+        ((index++))
+    done
     echo "0) Exit"
     echo "======================="
+
+    # Get user input
     read -rp "Enter your choice: " choice
 
-    case $choice in
-        1) install_yay ;;
-        2) update_system ;;
-        3) install_packages ;;
-        4) change_shell ;;
-        5) set_battery_threshold ;;
-        6) fix_plasma_meta ;;
-        7) reinstall_from_exported_list ;;
-        8) configure_git ;;
-        9) install_zimfw_online ;;
-        0) echo "Exiting..."; exit 0 ;;
-        *) echo "Invalid choice."; sleep 2; show_menu ;;
-    esac
+    # Execute corresponding function based on user input
+    if [[ "$choice" -ge 1 && "$choice" -le ${#options[@]} ]]; then
+        eval "${options[$((choice - 1))]#*:}"
+    elif [[ "$choice" == "0" ]]; then
+        echo "Exiting..."
+        exit 0
+    else
+        echo "Invalid choice. Please try again."
+        sleep 2
+        show_menu
+    fi
 }
-
 # Start the script by calling the menu
 show_menu
