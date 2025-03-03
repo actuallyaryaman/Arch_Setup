@@ -1,4 +1,5 @@
 # Arch Linux Setup Script
+A user friendly post installation setup script.
 Use at your discretion. Enjoy!
 ## Features
 
@@ -26,40 +27,6 @@ Use at your discretion. Enjoy!
    ```bash
    ./arch-setup.sh
    ```
-
-## Menu Options
-
-The script provides a menu with the following options:
-
-1. **Install yay-bin**  
-   Installs `yay-bin` if it's not already installed.
-
-2. **Update system**  
-   Updates the system packages using `yay`.
-
-3. **Install packages**  
-   Install packages from the AUR. You can enter one or more package names, and they will be installed.
-
-4. **Change default shell**  
-   Change your default shell to one of the available shells on the system.
-
-5. **Set battery charging threshold**  
-   Set a maximum battery charge percentage (1-100%) to preserve battery health.
-
-6. **Fix plasma-meta package**  
-   Reinstalls the dependencies for the `plasma-meta` package by removing and reinstalling required dependencies.
-
-7. **Install packages from saved list**  
-   Reinstalls all packages listed in the `installed_packages.txt` file.
-
-8. **Configure Git**  
-   Set up your Git user name and email globally.
-
-9. **Install ZimFW**  
-   Installs the Zim Framework for Zsh to enhance the shell experience.
-
-0. **Exit**  
-   Exit the script.
 
 ## License
 This project is licensed under the WTFPL License - see the [LICENSE](LICENSE) file for details.
