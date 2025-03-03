@@ -165,17 +165,17 @@ fix_plasma_meta() {
         echo "Removing plasma-meta..."
         sudo pacman -Rns --noconfirm plasma-meta
     fi
-
-    if pacman -Q discover &>/dev/null; then
-        echo "Removing discover..."
-        sudo pacman -Rns --noconfirm discover
-    fi
-
+    
     if [[ -n "$plasma_deps" ]]; then
         echo "Reinstalling plasma-meta dependencies..."
         sudo pacman -S --noconfirm $plasma_deps
     else
         echo "No plasma-meta dependencies found."
+    fi
+
+    if pacman -Q discover &>/dev/null; then
+        echo "Removing discover..."
+        sudo pacman -R --noconfirm discover
     fi
 
     sleep 1
@@ -184,8 +184,14 @@ fix_plasma_meta() {
 
 # Function to set battery charging threshold
 set_battery_threshold() {
-    echo "Enter the maximum battery charge threshold (1-100), or press 0 to return to the main menu:"
+    echo "Enter the maximum battery charge threshold (1-100), or press 0 to return to the main menu (Default: 80%):"
     read -rp "Threshold: " threshold
+
+    # If the user presses Enter without entering anything, use the default value of 80
+    if [[ -z "$threshold" ]]; then
+        threshold=80
+        echo "No input detected. Defaulting to 80%."
+    fi
 
     if [[ "$threshold" == "0" ]]; then
         show_menu
@@ -282,8 +288,8 @@ show_menu() {
         options+=("Install ZimFW:install_zimfw_online")
     fi
 
-    options+=("Set battery charging threshold:set_battery_threshold")
-    options+=("Fix plasma-meta package & remove discover:fix_plasma_meta")
+    options+=("Set battery charging threshold(Default 80%):set_battery_threshold")
+    options+=("Remove plasma-meta & discover:fix_plasma_meta")
     options+=("Configure Git user name and email:configure_git")
 
     # Display dynamic menu
