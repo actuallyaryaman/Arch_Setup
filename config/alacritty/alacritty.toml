@@ -1,0 +1,8 @@
+[general]
+import = [
+    "~/.config/alacritty/themes/themes/material_theme_mod.toml"
+]
+
+[window.dimensions]
+columns = 115
+lines = 30
