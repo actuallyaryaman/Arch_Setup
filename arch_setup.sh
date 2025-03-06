@@ -1,9 +1,9 @@
 #!/bin/bash
 
-PACKAGE_LIST_FILE="$(pwd)/installed_packages.txt"
+PACKAGE_LIST_FILE="$(pwd)/pkglist.txt"
 # Get the directory of the script
 SCRIPT_DIR="$(dirname "$(realpath "$0")")"
-PACKAGE_LIST_FILE="$SCRIPT_DIR/installed_packages.txt"
+PACKAGE_LIST_FILE="$SCRIPT_DIR/pkglist.txt"
 
 # Function to install yay-bin
 install_yay() {
