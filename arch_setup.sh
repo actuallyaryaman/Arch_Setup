@@ -51,16 +51,17 @@ install_packages() {
     done
 }
 
-# Function to add packages to the tracking list without duplicates
+# Function to add packages to the tracking list without duplicates and sort alphabetically
 add_to_package_list() {
     for package in "$@"; do
         if ! grep -qx "$package" "$PACKAGE_LIST_FILE"; then
             echo "$package" >> "$PACKAGE_LIST_FILE"
         fi
     done
+
+    # Sort the package list alphabetically and remove duplicates
+    sort -u -o "$PACKAGE_LIST_FILE" "$PACKAGE_LIST_FILE"
 }
-
-
 
 # Function to reinstall packages from the saved list
 reinstall_from_exported_list() {
