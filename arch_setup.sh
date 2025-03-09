@@ -316,8 +316,8 @@ show_menu() {
 
     options+=("Change default shell:change_shell")
 
-    # Only add "Install ZimFW" if the current shell is Zsh
-    if [[ "$SHELL" == "/bin/zsh" || "$SHELL" == "/usr/bin/zsh" ]]; then
+    # Only add "Install ZimFW" if ~/.zimrc is NOT present
+    if [[ "$SHELL" == "/bin/zsh" || "$SHELL" == "/usr/bin/zsh" ]] && [[ ! -f "$HOME/.zimrc" ]]; then
         options+=("Install ZimFW:install_zimfw_online")
     fi
 
