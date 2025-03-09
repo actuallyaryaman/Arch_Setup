@@ -20,7 +20,7 @@ install_yay() {
         rm -rf /tmp/yay-bin
         echo "yay-bin installation completed."
     fi
-    sleep 1
+    sleep 3
     show_menu
 }
 # Function to update the system
@@ -28,7 +28,7 @@ update_system() {
     echo "Updating the system..."
     yay -Syu --noconfirm --needed --removemake
     echo "System update completed."
-    sleep 1
+    sleep 3
     show_menu
 }
 
@@ -67,7 +67,7 @@ add_to_package_list() {
 reinstall_from_exported_list() {
     if [[ ! -f $PACKAGE_LIST_FILE ]]; then
         echo "No package list found. Install some packages first."
-        sleep 1
+        sleep 3
         show_menu
         return
     fi
@@ -77,7 +77,7 @@ reinstall_from_exported_list() {
 
     if [[ ${#package_list[@]} -eq 0 ]]; then
         echo "The package list is empty."
-        sleep 1
+        sleep 3
         show_menu
         return
     fi
@@ -116,7 +116,7 @@ reinstall_from_exported_list() {
         echo "No packages selected for installation."
     fi
 
-    sleep 1
+    sleep 3
     show_menu
 }
 
@@ -142,11 +142,11 @@ change_shell() {
         echo "Default shell changed successfully to $selected_shell. Please log out and log back in for changes to take effect."
     else
         echo "Invalid choice. Please try again."
-        sleep 1
+        sleep 3
         change_shell
     fi
 
-    sleep 1
+    sleep 3
     show_menu
 }
 # Function to fix plasma-meta package
@@ -156,7 +156,7 @@ fix_plasma_meta() {
 
     if ! command -v pactree &>/dev/null; then
         echo "Failed to install pacman-contrib. Cannot proceed."
-        sleep 1
+        sleep 3
         show_menu
     fi
 
@@ -180,7 +180,7 @@ fix_plasma_meta() {
         sudo pacman -R --noconfirm discover
     fi
 
-    sleep 1
+    sleep 3
     show_menu
 }
 
@@ -226,7 +226,7 @@ WantedBy=multi-user.target suspend.target hibernate.target hybrid-sleep.target s
 
         echo "Battery charging threshold set to $threshold% and will persist after reboot."
     fi
-    sleep 1
+    sleep 3
     show_menu
 }
 
@@ -247,7 +247,7 @@ configure_git() {
         echo "Invalid input. Both user name and email are required."
     fi
 
-    sleep 1
+    sleep 3
     show_menu
 }
 
@@ -256,9 +256,40 @@ install_zimfw_online() {
     echo "Installing ZimFW using curl..."
     curl -fsSL https://raw.githubusercontent.com/zimfw/install/master/install.zsh | zsh
     echo "ZimFW installation complete."
-    sleep 1
+    sleep 3
     show_menu
 }
+
+organize_downloads() {
+    local SCRIPT_NAME="organize_downloads"
+    local SCRIPT_SOURCE="$SCRIPT_DIR/scripts/download_organizer.sh"
+    local TARGET_DIR="/usr/local/bin"
+    local TARGET_PATH="$TARGET_DIR/$SCRIPT_NAME"
+
+    # Ensure script source exists
+    if [[ ! -f "$SCRIPT_SOURCE" ]]; then
+        echo "Error: Source script ($SCRIPT_SOURCE) not found!"
+        return 1
+    fi
+
+    # Check if the script already exists
+    if [[ -f "$TARGET_PATH" ]]; then
+        echo "Script already exists at $TARGET_PATH. Not overwriting."
+        return 1
+    fi
+
+    # Copy the script with sudo (since /usr/local/bin requires root permissions)
+    echo "Copying script to $TARGET_PATH..."
+    sudo cp "$SCRIPT_SOURCE" "$TARGET_PATH"
+
+    # Make the script executable
+    sudo chmod +x "$TARGET_PATH"
+
+    echo "Script installed at $TARGET_PATH. Run it using: organize_downloads"
+    sleep 3
+    show_menu
+}
+
 
 # Menu function
 show_menu() {
@@ -291,8 +322,16 @@ show_menu() {
     fi
 
     options+=("Set battery charging threshold(Default 80%):set_battery_threshold")
-    options+=("Remove plasma-meta & discover:fix_plasma_meta")
+    # Check if plasma-meta is installed
+    if pacman -Q plasma-meta &>/dev/null; then
+        options+=("Remove plasma-meta & discover:fix_plasma_meta")
+    fi
     options+=("Configure Git user name and email:configure_git")
+    
+    # Add install script option if the script is not installed in /usr/local/bin
+    if [[ ! -f "/usr/local/bin/organize_downloads" ]]; then
+        options+=("Install Downloads Organizer Script:organize_downloads")
+    fi
 
     # Display dynamic menu
     local index=1
