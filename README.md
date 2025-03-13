@@ -1,32 +1,64 @@
-# Arch Linux Setup Script
-A user friendly post installation setup script.
-Use at your discretion. Enjoy!
-## Features
+## Arch Linux Setup Script
 
-- **Install yay-bin**: Installs the AUR helper `yay-bin`.
-- **Update system**: Updates the system using `yay`.
-- **Install packages**: Installs one or more packages from the AUR and saves them to a list.
-- **Reinstall packages from list**: Reinstalls all previously installed packages from a saved list.
-- **Change default shell**: Allows you to choose and change the default shell.
-- **Set battery charging threshold**: Set the battery charging threshold to extend the battery lifespan.
-- **Fix plasma-meta package**: Removes and reinstalls the dependencies for the `plasma-meta` package.
-- **Configure Git**: Set up Git username and email for global configuration.
-- **Install ZimFW**: Installs the Zim Framework for Zsh for an enhanced shell experience.
+> ⚠️ **Important:** This script is primarily for **Arch Linux**. Package management for other systems is currently not supported.
 
-## Usage
+This is primarily for my personal use, but why not let you have it? 
 
-1. Clone the repository or download the script to your system.
-   ```bash
-   git clone https://github.com/actuallyaryaman/Arch-Setup && cd Arch-Setup
-   ```
-3. Make the script executable by running:
-   ```bash
-   chmod +x arch-setup.sh
-   ```
-4. Run the script:
-   ```bash
-   ./arch-setup.sh
-   ```
+A simple script to manage an Arch Linux installation with a **menu-driven interface**.
 
-## License
-This project is licensed under the WTFPL License - see the [LICENSE](LICENSE) file for details.
+### **Features**
+
+| Option                     | Action                           |
+| -------------------------- | -------------------------------- |
+| **Update system**          | Updates all packages             |
+| **Install yay-bin**        | Installs the AUR helper `yay`    |
+| **Install packages**       | Installs user-specified packages |
+| **Restore saved packages** | Installs from `pkglist.txt`      |
+| **Change shell**           | Switches to Bash or Zsh          |
+| **Add aliases**            | Adds custom command aliases      |
+| **Fix plasma-meta**        | Repairs KDE dependencies         |
+| **Set battery limit**      | Adjusts charging threshold       |
+| **Configure Git**          | Sets Git name & email            |
+| **Install ZimFW**          | Installs Zsh framework           |
+| **Organize Downloads**     | Sorts downloaded files           |
+
+---
+
+### **Usage**
+
+> **🚨 Warning**
+> This script installs and removes packages. Make sure you **review** the commands before running it.
+
+#### **1. Download & Run**
+
+bash
+        
+    git clone https://github.com/yourusername/arch-setup-script.git 
+    
+    cd arch-setup-script 
+    
+    chmod +x arch-setup.sh 
+    
+    ./arch-setup.sh
+
+---
+
+### **Notes**
+
+- Restart the shell after adding an alias:
+    
+bash
+        
+    source ~/.bashrc   # For Bash
+    source ~/.zshrc    # For Zsh
+    
+- Package tracking is saved in `pkglist.txt`. Be sure to back it up!
+---
+
+### **License**
+
+
+---
+
+
+## More features on the way!
