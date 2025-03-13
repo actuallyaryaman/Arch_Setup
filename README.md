@@ -33,7 +33,7 @@ A simple script to manage an Arch Linux installation with a **menu-driven interf
 
 bash
         
-    git clone https://github.com/yourusername/arch-setup-script.git 
+    git clone https://github.com/actuallyaryaman/Arch_Setup
     
     cd arch-setup-script 
     
