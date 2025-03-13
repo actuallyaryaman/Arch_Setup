@@ -4,6 +4,7 @@ PACKAGE_LIST_FILE="$(pwd)/pkglist.txt"
 # Get the directory of the script
 SCRIPT_DIR="$(dirname "$(realpath "$0")")"
 PACKAGE_LIST_FILE="$SCRIPT_DIR/pkglist.txt"
+USER_SHELL=$(getent passwd "$USER" | cut -d: -f7)
 
 # Function to install yay-bin
 install_yay() {
@@ -120,12 +121,11 @@ reinstall_from_exported_list() {
     show_menu
 }
 
-
 # Function to change default shell
 change_shell() {
     echo "Available shells:"
-
     local shells=($(chsh -l))
+    
     for i in "${!shells[@]}"; do
         echo "$((i+1))) ${shells[$i]}"
     done
@@ -139,16 +139,16 @@ change_shell() {
         selected_shell=${shells[$((shell_choice-1))]}
         echo "Changing the default shell to $selected_shell"
         chsh -s "$selected_shell"
-        echo "Default shell changed successfully to $selected_shell. Please log out and log back in for changes to take effect."
+        echo "Default shell changed to $selected_shell. Please log out and log back in for changes to take effect."
     else
         echo "Invalid choice. Please try again."
         sleep 3
         change_shell
     fi
-
     sleep 3
     show_menu
 }
+
 # Function to fix plasma-meta package
 fix_plasma_meta() {
     echo "Installing pacman-contrib to use pactree..."
@@ -290,8 +290,45 @@ organize_downloads() {
     show_menu
 }
 
+add_shell_alias() {
+    echo "Enter the alias name:"
+    read alias_name
 
-# Menu function
+    echo "Enter the command for alias '$alias_name':"
+    read alias_command
+
+    if [[ -z "$alias_name" || -z "$alias_command" ]]; then
+        echo "Alias name or command cannot be empty."
+        return 1
+    fi
+
+    # Determine the correct shell config file
+    if [[ "$SHELL" == */zsh ]]; then
+        config_file="$HOME/.zshrc"
+    elif [[ "$SHELL" == */bash ]]; then
+        config_file="$HOME/.bashrc"
+    else
+        echo "Unsupported shell: $SHELL"
+        return 1
+    fi
+
+    # Check if alias already exists
+    if grep -q "alias $alias_name=" "$config_file"; then
+        echo "Alias '$alias_name' already exists in $config_file."
+        return 1
+    fi
+
+    # Append alias to the correct shell configuration file
+    echo "alias $alias_name='$alias_command'" >> "$config_file"
+    echo "Alias added to $config_file: alias $alias_name='$alias_command'"
+    echo "Restart your shell or run: source $config_file for changes to take effect."
+
+    sleep 3
+    show_menu
+}
+
+
+# Function to display the menu
 show_menu() {
     clear
     echo "Arch Linux Setup Script"
@@ -299,41 +336,37 @@ show_menu() {
 
     local options=()
     
-    # Always available options
     options+=("Update system:update_system")
-    
-    # Only add "Install yay-bin" if yay is NOT installed
+
     if ! command -v yay &>/dev/null; then
         options+=("Install yay-bin:install_yay")
     fi
 
     options+=("Install packages:install_packages")
 
-    # Only add "Install packages from saved list" if package list file exists and is not empty
     if [[ -f "$PACKAGE_LIST_FILE" && -s "$PACKAGE_LIST_FILE" ]]; then
         options+=("Install packages from saved list:reinstall_from_exported_list")
     fi
 
     options+=("Change default shell:change_shell")
+    options+=("Add aliases:add_shell_alias")
 
-    # Only add "Install ZimFW" if ~/.zimrc is NOT present
-    if [[ "$SHELL" == "/bin/zsh" || "$SHELL" == "/usr/bin/zsh" ]] && [[ ! -f "$HOME/.zimrc" ]]; then
+    if [[ "$USER_SHELL" == */zsh && ! -f "$HOME/.zimrc" ]]; then
         options+=("Install ZimFW:install_zimfw_online")
     fi
 
-    options+=("Set battery charging threshold(Default 80%):set_battery_threshold")
-    # Check if plasma-meta is installed
+    options+=("Set battery charging threshold (Default 80%):set_battery_threshold")
+
     if pacman -Q plasma-meta &>/dev/null; then
         options+=("Remove plasma-meta & discover:fix_plasma_meta")
     fi
+
     options+=("Configure Git user name and email:configure_git")
-    
-    # Add install script option if the script is not installed in /usr/local/bin
+
     if [[ ! -f "/usr/local/bin/organize_downloads" ]]; then
         options+=("Install Downloads Organizer Script:organize_downloads")
     fi
 
-    # Display dynamic menu
     local index=1
     for option in "${options[@]}"; do
         echo "$index) ${option%%:*}"
@@ -342,10 +375,8 @@ show_menu() {
     echo "0) Exit"
     echo "======================="
 
-    # Get user input
     read -rp "Enter your choice: " choice
 
-    # Execute corresponding function based on user input
     if [[ "$choice" -ge 1 && "$choice" -le ${#options[@]} ]]; then
         eval "${options[$((choice - 1))]#*:}"
     elif [[ "$choice" == "0" ]]; then
@@ -357,5 +388,6 @@ show_menu() {
         show_menu
     fi
 }
+
 # Start the script by calling the menu
 show_menu
