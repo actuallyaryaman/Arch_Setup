@@ -6,120 +6,91 @@ SCRIPT_DIR="$(dirname "$(realpath "$0")")"
 PACKAGE_LIST_FILE="$SCRIPT_DIR/pkglist.txt"
 USER_SHELL=$(getent passwd "$USER" | cut -d: -f7)
 
-# Function to install yay-bin
-install_yay() {
-    echo "Installing yay-bin..."
+# Detect package manager
+if command -v pacman &>/dev/null; then
+    PKG_MANAGER="pacman"
+elif command -v apt &>/dev/null; then
+    PKG_MANAGER="apt"
+elif command -v dnf &>/dev/null; then
+    PKG_MANAGER="dnf"
+elif command -v zypper &>/dev/null; then
+    PKG_MANAGER="zypper"
+elif command -v xbps-install &>/dev/null; then
+    PKG_MANAGER="xbps"
+else
+    PKG_MANAGER="unknown"
+fi
 
-    if command -v yay &>/dev/null; then
-        echo "yay is already installed."
-    else
-        sudo pacman -S --needed --noconfirm base-devel git
-        git clone https://aur.archlinux.org/yay-bin.git /tmp/yay-bin
-        cd /tmp/yay-bin || exit
-        makepkg -si --noconfirm
-        cd - || exit
-        rm -rf /tmp/yay-bin
-        echo "yay-bin installation completed."
-    fi
-    sleep 3
-    show_menu
-}
-# Function to update the system
-update_system() {
-    echo "Updating the system..."
-    yay -Syu --noconfirm --needed --removemake
-    echo "System update completed."
-    sleep 3
-    show_menu
-}
+# Arch-Specific Functions (Only available for Arch-based distros)
+if [[ "$PKG_MANAGER" == "pacman" ]]; then
+    install_yay() {
+        echo "Installing yay-bin..."
+        if command -v yay &>/dev/null; then
+            echo "yay is already installed."
+        else
+            sudo pacman -S --needed --noconfirm base-devel git
+            git clone https://aur.archlinux.org/yay-bin.git /tmp/yay-bin
+            cd /tmp/yay-bin || exit
+            makepkg -si --noconfirm
+            cd - || exit
+            rm -rf /tmp/yay-bin
+            echo "yay-bin installation completed."
+        fi
+        sleep 3
+        show_menu
+    }
 
-# Function to install packages and update the list
-install_packages() {
-    while true; do
-        echo "Enter the package(s) you want to install (space-separated), or press 0 to return to the main menu:"
+    update_system() {
+        echo "Updating the system..."
+        yay -Syu --noconfirm --needed --removemake
+        echo "System update completed."
+        sleep 3
+        show_menu
+    }
+
+    install_packages() {
+        echo "Enter the package(s) you want to install (space-separated), or press 0 to return:"
         read -rp "Packages: " packages
-
-        if [[ $packages == "0" ]]; then
+        if [[ "$packages" == "0" ]]; then
             show_menu
         elif [[ -z "$packages" ]]; then
             echo "No packages entered. Please try again."
         else
-            echo "Installing packages: $packages"
+            echo "Installing: $packages"
             yay -S --noconfirm --needed --removemake $packages
             add_to_package_list $packages
             echo "Installation completed and package list updated."
         fi
-    done
-}
+    }
 
-# Function to add packages to the tracking list without duplicates and sort alphabetically
-add_to_package_list() {
-    for package in "$@"; do
-        if ! grep -qx "$package" "$PACKAGE_LIST_FILE"; then
-            echo "$package" >> "$PACKAGE_LIST_FILE"
+    fix_plasma_meta() {
+        echo "Installing pacman-contrib to use pactree..."
+        sudo pacman -S --needed --noconfirm pacman-contrib
+        if ! command -v pactree &>/dev/null; then
+            echo "Failed to install pacman-contrib. Cannot proceed."
+            sleep 3
+            show_menu
         fi
-    done
-
-    # Sort the package list alphabetically and remove duplicates
-    sort -u -o "$PACKAGE_LIST_FILE" "$PACKAGE_LIST_FILE"
-}
-
-# Function to reinstall packages from the saved list
-reinstall_from_exported_list() {
-    if [[ ! -f $PACKAGE_LIST_FILE ]]; then
-        echo "No package list found. Install some packages first."
+        echo "Fetching plasma-meta dependencies..."
+        plasma_deps=$(pactree -d 1 -u plasma-meta | grep -v 'plasma-meta' | tr '\n' ' ')
+        if pacman -Q plasma-meta &>/dev/null; then
+            echo "Removing plasma-meta..."
+            sudo pacman -Rns --noconfirm plasma-meta
+        fi
+        if [[ -n "$plasma_deps" ]]; then
+            echo "Reinstalling plasma-meta dependencies..."
+            sudo pacman -S --noconfirm $plasma_deps
+        else
+            echo "No plasma-meta dependencies found."
+        fi
+        if pacman -Q discover &>/dev/null; then
+            echo "Removing discover..."
+            sudo pacman -R --noconfirm discover
+        fi
         sleep 3
         show_menu
-        return
-    fi
-
-    # Read package list into an array
-    mapfile -t package_list < "$PACKAGE_LIST_FILE"
-
-    if [[ ${#package_list[@]} -eq 0 ]]; then
-        echo "The package list is empty."
-        sleep 3
-        show_menu
-        return
-    fi
-
-    echo "Packages in the saved list:"
-    for i in "${!package_list[@]}"; do
-        echo "$((i+1))) ${package_list[$i]}"
-    done
-
-    echo "Enter the numbers of the packages you want to **exclude** (space-separated), or press Enter to install all:"
-    read -rp "Exclude: " exclude_input
-
-    # Process exclusions if the user entered numbers
-    if [[ -n "$exclude_input" ]]; then
-        # Convert input into an array of indexes to exclude
-        exclude_indexes=($exclude_input)
-        filtered_packages=()
-
-        for i in "${!package_list[@]}"; do
-            if [[ ! " ${exclude_indexes[@]} " =~ " $((i+1)) " ]]; then
-                filtered_packages+=("${package_list[$i]}")
-            else
-                echo "Skipping: ${package_list[$i]}"
-            fi
-        done
-    else
-        filtered_packages=("${package_list[@]}")
-    fi
-
-    # Proceed with installation if there are remaining packages
-    if [[ ${#filtered_packages[@]} -gt 0 ]]; then
-        echo "Installing selected packages: ${filtered_packages[*]}"
-        yay -S --noconfirm --needed --removemake "${filtered_packages[@]}"
-        echo "Installation completed."
-    else
-        echo "No packages selected for installation."
-    fi
-
-    sleep 3
-    show_menu
-}
+    }
+fi
 
 # Function to change default shell
 change_shell() {
@@ -338,30 +309,25 @@ show_menu() {
     
     options+=("Update system:update_system")
 
+    if [[ "$PKG_MANAGER" == "pacman" ]]; then
     if ! command -v yay &>/dev/null; then
         options+=("Install yay-bin:install_yay")
     fi
-
     options+=("Install packages:install_packages")
-
     if [[ -f "$PACKAGE_LIST_FILE" && -s "$PACKAGE_LIST_FILE" ]]; then
         options+=("Install packages from saved list:reinstall_from_exported_list")
     fi
-
-    options+=("Change default shell:change_shell")
-    options+=("Add aliases:add_shell_alias")
-
-    if [[ "$USER_SHELL" == */zsh && ! -f "$HOME/.zimrc" ]]; then
-        options+=("Install ZimFW:install_zimfw_online")
-    fi
-
-    options+=("Set battery charging threshold (Default 80%):set_battery_threshold")
-
     if pacman -Q plasma-meta &>/dev/null; then
         options+=("Remove plasma-meta & discover:fix_plasma_meta")
     fi
-
-    options+=("Configure Git user name and email:configure_git")
+    fi
+    options+=("Change default shell:change_shell")
+    options+=("Add aliases:add_shell_alias")
+    if [[ "$USER_SHELL" == */zsh && ! -f "$HOME/.zimrc" ]]; then
+        options+=("Install ZimFW:install_zimfw_online")
+    fi
+    options+=("Set battery charging threshold (Default 80%):set_battery_threshold")
+        options+=("Configure Git user name and email:configure_git")
 
     if [[ ! -f "/usr/local/bin/organize_downloads" ]]; then
         options+=("Install Downloads Organizer Script:organize_downloads")
