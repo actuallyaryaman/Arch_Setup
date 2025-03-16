@@ -133,41 +133,6 @@ change_shell() {
     show_menu
 }
 
-# Function to fix plasma-meta package
-fix_plasma_meta() {
-    echo "Installing pacman-contrib to use pactree..."
-    sudo pacman -S --needed --noconfirm pacman-contrib
-
-    if ! command -v pactree &>/dev/null; then
-        echo "Failed to install pacman-contrib. Cannot proceed."
-        sleep 3
-        show_menu
-    fi
-
-    echo "Fetching plasma-meta dependencies..."
-    plasma_deps=$(pactree -d 1 -u plasma-meta | grep -v 'plasma-meta' | tr '\n' ' ')
-
-    if pacman -Q plasma-meta &>/dev/null; then
-        echo "Removing plasma-meta..."
-        sudo pacman -Rns --noconfirm plasma-meta
-    fi
-    
-    if [[ -n "$plasma_deps" ]]; then
-        echo "Reinstalling plasma-meta dependencies..."
-        sudo pacman -S --noconfirm $plasma_deps
-    else
-        echo "No plasma-meta dependencies found."
-    fi
-
-    if pacman -Q discover &>/dev/null; then
-        echo "Removing discover..."
-        sudo pacman -R --noconfirm discover
-    fi
-
-    sleep 3
-    show_menu
-}
-
 # Function to set battery charging threshold
 set_battery_threshold() {
     echo "Enter the maximum battery charge threshold (1-100), or press 0 to return to the main menu (Default: 80%):"
