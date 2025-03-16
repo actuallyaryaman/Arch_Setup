@@ -61,6 +61,8 @@ if [[ "$PKG_MANAGER" == "pacman" ]]; then
             add_to_package_list $packages
             echo "Installation completed and package list updated."
         fi
+        sleep 3
+        show_menu
     }
 
     fix_plasma_meta() {
@@ -91,6 +93,17 @@ if [[ "$PKG_MANAGER" == "pacman" ]]; then
         show_menu
     }
 fi
+
+add_to_package_list() {
+    for package in "$@"; do
+        if ! grep -qx "$package" "$PACKAGE_LIST_FILE"; then
+            echo "$package" >> "$PACKAGE_LIST_FILE"
+        fi
+    done
+
+    # Sort the package list alphabetically and remove duplicates
+    sort -u -o "$PACKAGE_LIST_FILE" "$PACKAGE_LIST_FILE"
+}
 
 # Function to change default shell
 change_shell() {
