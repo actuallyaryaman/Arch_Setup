@@ -19,7 +19,7 @@ hide-cursor-when-typing = true
 # (windows: C:\Users\USER\AppData\Local\rio\themes\dracula.toml)
 #
 # Example:
- theme = "OceanicMaterial"
+ theme = "MateriaTheme"
 
 # Padding-x
 #
