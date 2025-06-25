@@ -6,6 +6,10 @@ SCRIPT_DIR="$(dirname "$(realpath "$0")")"
 PACKAGE_LIST_FILE="$SCRIPT_DIR/pkglist.txt"
 USER_SHELL=$(getent passwd "$USER" | cut -d: -f7)
 
+# Resolve working directory to original script location
+script_dir="$(dirname "$(readlink -f "$0")")"
+cd "$script_dir" || { echo "Failed to enter script directory"; exit 1; }
+
 # Detect package manager
 if command -v pacman &>/dev/null; then
     PKG_MANAGER="pacman"
@@ -132,6 +136,72 @@ change_shell() {
     sleep 3
     show_menu
 }
+
+reinstall_from_exported_list() {
+    if [[ ! -f $PACKAGE_LIST_FILE ]]; then
+        echo "No package list found. Install some packages first."
+        sleep 3
+        show_menu
+        return
+    fi
+
+    # Read package list into an array
+    mapfile -t package_list < "$PACKAGE_LIST_FILE"
+
+    if [[ ${#package_list[@]} -eq 0 ]]; then
+        echo "The package list is empty."
+        sleep 3
+        show_menu
+        return
+    fi
+
+    echo "Packages in the saved list:"
+    for i in "${!package_list[@]}"; do
+        echo "$((i+1))) ${package_list[$i]}"
+    done
+
+    echo "Enter the numbers of the packages you want to **exclude** (space-separated),"
+    echo "press Enter to install all, or enter 0 to return to the main menu:"
+    read -rp "Exclude: " exclude_input
+
+    # If user enters 0, return to main menu
+    if [[ "$exclude_input" == "0" ]]; then
+        echo "Returning to main menu..."
+        sleep 1
+        show_menu
+        return
+    fi
+
+    # Process exclusions if the user entered numbers
+    if [[ -n "$exclude_input" ]]; then
+        # Convert input into an array of indexes to exclude
+        exclude_indexes=($exclude_input)
+        filtered_packages=()
+
+        for i in "${!package_list[@]}"; do
+            if [[ ! " ${exclude_indexes[@]} " =~ " $((i+1)) " ]]; then
+                filtered_packages+=("${package_list[$i]}")
+            else
+                echo "Skipping: ${package_list[$i]}"
+            fi
+        done
+    else
+        filtered_packages=("${package_list[@]}")
+    fi
+
+    # Proceed with installation if there are remaining packages
+    if [[ ${#filtered_packages[@]} -gt 0 ]]; then
+        echo "Installing selected packages: ${filtered_packages[*]}"
+        yay -S --noconfirm --needed --removemake "${filtered_packages[@]}"
+        echo "Installation completed."
+    else
+        echo "No packages selected for installation."
+    fi
+
+    sleep 3
+    show_menu
+}
+
 
 # Function to set battery charging threshold
 set_battery_threshold() {
@@ -367,6 +437,41 @@ configure_parallel_downloads() {
     enable_parallel_downloads "$num_downloads"
 }
 
+add_script_to_path() {
+    local SCRIPT_PATH SCRIPT_NAME SYMLINK_TARGET SHELL_NAME RC_FILE
+    SCRIPT_PATH="$(realpath "$0")"
+    SCRIPT_NAME="$(basename "$SCRIPT_PATH")"
+    SYMLINK_TARGET="$HOME/.local/bin/$SCRIPT_NAME"
+    SHELL_NAME="$(basename "$SHELL")"
+
+    mkdir -p "$HOME/.local/bin"
+    # Remove old symlink if it exists
+    [ -e "$SYMLINK_TARGET" ] && rm -f "$SYMLINK_TARGET"
+    ln -s "$SCRIPT_PATH" "$SYMLINK_TARGET"
+    chmod +x "$SCRIPT_PATH"
+    echo "Symlinked $SCRIPT_PATH to $SYMLINK_TARGET"
+
+    # Choose the right RC file
+    if [[ "$SHELL_NAME" == "zsh" ]]; then
+        RC_FILE="$HOME/.zshrc"
+    else
+        RC_FILE="$HOME/.bashrc"
+    fi
+
+    # Add ~/.local/bin to PATH if not present
+    if ! grep -q 'export PATH=.*$HOME/.local/bin' "$RC_FILE"; then
+        echo 'export PATH="$HOME/.local/bin:$PATH"' >> "$RC_FILE"
+        echo "Added ~/.local/bin to PATH in $RC_FILE"
+    else
+        echo "~/.local/bin is already in PATH in $RC_FILE"
+    fi
+
+    echo "To apply changes, run: source $RC_FILE"
+    sleep 3
+    show_menu
+}
+
+
 # Function to display the menu
 show_menu() {
     clear
@@ -374,7 +479,7 @@ show_menu() {
     echo "======================="
 
     local options=()
-
+    options+=("Add this script to your PATH (symlink):add_script_to_path")
     options+=("Configure parallel downloads:configure_parallel_downloads")
     options+=("Update system:update_system")
 
