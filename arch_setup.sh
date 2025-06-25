@@ -471,6 +471,39 @@ add_script_to_path() {
     show_menu
 }
 
+move_config_to_home() {
+    local source_dir="$SCRIPT_DIR/config"
+    local target_dir="$HOME/.config"
+
+    # Check if the source config folder exists
+    if [[ ! -d "$source_dir" ]]; then
+        echo "No 'config' directory found in the script directory ($source_dir)."
+        sleep 2
+        show_menu
+        return
+    fi
+
+    # Create ~/.config if it doesn't exist
+    mkdir -p "$target_dir"
+
+    # Move contents (not the folder itself) to ~/.config
+    shopt -s dotglob nullglob
+    local files=("$source_dir"/*)
+    if [[ ${#files[@]} -eq 0 ]]; then
+        echo "'config' directory is empty. Nothing to move."
+        sleep 2
+        show_menu
+        return
+    fi
+
+    echo "Moving contents of $source_dir to $target_dir..."
+    mv "$source_dir"/* "$target_dir"/
+
+    echo "Config files moved to $target_dir."
+    sleep 2
+    show_menu
+}
+
 
 # Function to display the menu
 show_menu() {
@@ -491,6 +524,7 @@ show_menu() {
     if [[ -f "$PACKAGE_LIST_FILE" && -s "$PACKAGE_LIST_FILE" ]]; then
         options+=("Install packages from saved list:reinstall_from_exported_list")
     fi
+    options+=("Copy config files:move_config_to_home")
     if pacman -Q plasma-meta &>/dev/null; then
         options+=("Remove plasma-meta & discover:fix_plasma_meta")
     fi
