@@ -276,6 +276,96 @@ add_shell_alias() {
     show_menu
 }
 
+# Function to enable parallel downloads in pacman
+enable_parallel_downloads() {
+    local num_downloads=${1:-5}
+    local config_file="/etc/pacman.conf"
+
+    # Show help if requested
+    if [[ "$1" == "-h" || "$1" == "--help" ]]; then
+        echo "Usage: enable_parallel_downloads [number]"
+        echo "Enable parallel downloads in pacman with specified number of concurrent downloads"
+        echo ""
+        echo "Arguments:"
+        echo "  number    Number of parallel downloads (1-50, default: 5)"
+        echo ""
+        echo "Examples:"
+        echo "  enable_parallel_downloads     # Uses default of 5"
+        echo "  enable_parallel_downloads 10  # Sets to 10 parallel downloads"
+        sleep 3
+        show_menu
+        return 0
+    fi
+
+    # Validate input
+    if ! [[ "$num_downloads" =~ ^[1-9][0-9]*$ ]] || [ "$num_downloads" -gt 50 ]; then
+        echo "Error: Please provide a valid number between 1 and 50."
+        echo "Usage: enable_parallel_downloads [number]"
+        sleep 3
+        show_menu
+        return 1
+    fi
+
+    # Check if pacman.conf exists
+    if [[ ! -f "$config_file" ]]; then
+        echo "Error: $config_file not found. Are you running Arch Linux?"
+        sleep 3
+        show_menu
+        return 1
+    fi
+
+    # Backup original file
+    sudo cp "$config_file" "$config_file.backup.$(date +%Y%m%d_%H%M%S)"
+    echo "Backup created: $config_file.backup.$(date +%Y%m%d_%H%M%S)"
+
+    # Apply changes
+    if grep -q "^#ParallelDownloads\|^ParallelDownloads" "$config_file"; then
+        sudo sed -i "s/^#\?ParallelDownloads = [0-9]\+/ParallelDownloads = $num_downloads/" "$config_file"
+        echo "✓ Parallel downloads updated to $num_downloads"
+    else
+        # Add under [options] section
+        sudo sed -i '/^\[options\]/a ParallelDownloads = '"$num_downloads" "$config_file"
+        echo "✓ Added ParallelDownloads = $num_downloads to configuration"
+    fi
+
+    # Show current setting
+    echo "Current configuration:"
+    grep --color=never "ParallelDownloads" "$config_file"
+
+    echo ""
+    echo "Parallel downloads are now enabled. Run 'sudo pacman -Syu' to see the effect!"
+    sleep 3
+    show_menu
+}
+
+# Function to configure parallel downloads with user input
+configure_parallel_downloads() {
+    echo "Configure Pacman Parallel Downloads"
+    echo "===================================="
+    echo ""
+    echo "Current setting:"
+    if grep -q "^ParallelDownloads" /etc/pacman.conf; then
+        grep "ParallelDownloads" /etc/pacman.conf
+    elif grep -q "^#ParallelDownloads" /etc/pacman.conf; then
+        echo "Parallel downloads are currently disabled"
+        grep "#ParallelDownloads" /etc/pacman.conf
+    else
+        echo "No ParallelDownloads setting found (using default: 1)"
+    fi
+    echo ""
+    echo "Enter the number of parallel downloads (1-50), or press Enter for default (5):"
+    echo "Note: Higher values work better with faster internet connections"
+    read -rp "Number of parallel downloads: " num_downloads
+
+    # Use default if empty
+    if [[ -z "$num_downloads" ]]; then
+        num_downloads=5
+        echo "Using default value: 5"
+    fi
+
+    # Call the enable function
+    enable_parallel_downloads "$num_downloads"
+}
 
 # Function to display the menu
 show_menu() {
@@ -284,7 +374,8 @@ show_menu() {
     echo "======================="
 
     local options=()
-    
+
+    options+=("Configure parallel downloads:configure_parallel_downloads")
     options+=("Update system:update_system")
 
     if [[ "$PKG_MANAGER" == "pacman" ]]; then
