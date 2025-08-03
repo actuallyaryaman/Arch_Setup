@@ -32,7 +32,7 @@ if [[ "$PKG_MANAGER" == "pacman" ]]; then
         if command -v yay &>/dev/null; then
             echo "yay is already installed."
         else
-            sudo pacman -S --needed --noconfirm base-devel git
+            pacman -S --needed --noconfirm base-devel git
             git clone https://aur.archlinux.org/yay-bin.git /tmp/yay-bin
             cd /tmp/yay-bin || exit
             makepkg -si --noconfirm
@@ -71,7 +71,7 @@ if [[ "$PKG_MANAGER" == "pacman" ]]; then
 
     fix_plasma_meta() {
         echo "Installing pacman-contrib to use pactree..."
-        sudo pacman -S --needed --noconfirm pacman-contrib
+        pacman -S --needed --noconfirm pacman-contrib
         if ! command -v pactree &>/dev/null; then
             echo "Failed to install pacman-contrib. Cannot proceed."
             sleep 3
@@ -81,17 +81,17 @@ if [[ "$PKG_MANAGER" == "pacman" ]]; then
         plasma_deps=$(pactree -d 1 -u plasma-meta | grep -v 'plasma-meta' | tr '\n' ' ')
         if pacman -Q plasma-meta &>/dev/null; then
             echo "Removing plasma-meta..."
-            sudo pacman -Rns --noconfirm plasma-meta
+            pacman -Rns --noconfirm plasma-meta
         fi
         if [[ -n "$plasma_deps" ]]; then
             echo "Reinstalling plasma-meta dependencies..."
-            sudo pacman -S --noconfirm $plasma_deps
+            pacman -S --noconfirm $plasma_deps
         else
             echo "No plasma-meta dependencies found."
         fi
         if pacman -Q discover &>/dev/null; then
             echo "Removing discover..."
-            sudo pacman -R --noconfirm discover
+            pacman -R --noconfirm discover
         fi
         sleep 3
         show_menu
@@ -222,7 +222,7 @@ set_battery_threshold() {
         echo "Setting battery charge threshold to $threshold%..."
         for bat in /sys/class/power_supply/BAT?/charge_control_end_threshold; do
             if [[ -f $bat ]]; then
-                echo $threshold | sudo tee $bat > /dev/null
+                echo $threshold | tee $bat > /dev/null
                 echo "Threshold applied instantly to $bat"
             fi
         done
@@ -239,9 +239,9 @@ ExecStart=/bin/bash -c 'echo $threshold > /sys/class/power_supply/BAT?/charge_co
 WantedBy=multi-user.target suspend.target hibernate.target hybrid-sleep.target suspend-then-hibernate.target
 "
 
-        echo "$service_content" | sudo tee /etc/systemd/system/battery-manager.service > /dev/null
-        sudo systemctl enable battery-manager.service
-        sudo systemctl start battery-manager.service
+        echo "$service_content" | tee /etc/systemd/system/battery-manager.service > /dev/null
+        systemctl enable battery-manager.service
+        systemctl start battery-manager.service
 
         echo "Battery charging threshold set to $threshold% and will persist after reboot."
     fi
@@ -299,10 +299,10 @@ organize_downloads() {
 
     # Copy the script with sudo (since /usr/local/bin requires root permissions)
     echo "Copying script to $TARGET_PATH..."
-    sudo cp "$SCRIPT_SOURCE" "$TARGET_PATH"
+    cp "$SCRIPT_SOURCE" "$TARGET_PATH"
 
     # Make the script executable
-    sudo chmod +x "$TARGET_PATH"
+    chmod +x "$TARGET_PATH"
 
     echo "Script installed at $TARGET_PATH. Run it using: organize_downloads"
     sleep 3
@@ -385,16 +385,16 @@ enable_parallel_downloads() {
     fi
 
     # Backup original file
-    sudo cp "$config_file" "$config_file.backup.$(date +%Y%m%d_%H%M%S)"
+    cp "$config_file" "$config_file.backup.$(date +%Y%m%d_%H%M%S)"
     echo "Backup created: $config_file.backup.$(date +%Y%m%d_%H%M%S)"
 
     # Apply changes
     if grep -q "^#ParallelDownloads\|^ParallelDownloads" "$config_file"; then
-        sudo sed -i "s/^#\?ParallelDownloads = [0-9]\+/ParallelDownloads = $num_downloads/" "$config_file"
+        sed -i "s/^#\?ParallelDownloads = [0-9]\+/ParallelDownloads = $num_downloads/" "$config_file"
         echo "✓ Parallel downloads updated to $num_downloads"
     else
         # Add under [options] section
-        sudo sed -i '/^\[options\]/a ParallelDownloads = '"$num_downloads" "$config_file"
+        sed -i '/^\[options\]/a ParallelDownloads = '"$num_downloads" "$config_file"
         echo "✓ Added ParallelDownloads = $num_downloads to configuration"
     fi
 
